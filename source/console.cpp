@@ -288,9 +288,9 @@ namespace db
         return 0;
     }
     
-    VOID console::_thread_resize(DWORD Width, DWORD Height) {
-        SetWindowPos(_hwnd_console_output, NULL, 0, 0, Width, Height * 0.9, 0);
-        SetWindowPos(_hwnd_console_input, NULL, 0, Height * 0.9, Width, Height * 0.1, 0);
+    VOID console::_thread_resize(DWORD width, DWORD height) {
+        SetWindowPos(_hwnd_console_output, NULL, 0, 0, width, height * 0.9, 0);
+        SetWindowPos(_hwnd_console_input, NULL, 0, height * 0.9, width, height * 0.1, 0);
     }
 
     bool console::_thread_finalize() {
