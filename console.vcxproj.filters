@@ -37,5 +37,11 @@
     <ClInclude Include="include\mail.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\console.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\lock.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

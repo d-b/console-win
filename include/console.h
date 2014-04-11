@@ -2,7 +2,7 @@
  *   Project: console-win
  *   Copyright (C) Daniel Bloemendal. All rights reserved.
  *
- *   Mail interface
+ *   C console interface
  *
  *   This file is part of console-win.
  *
@@ -22,31 +22,27 @@
 
 #pragma once
 
-namespace db
-{
-    class mail {
-    public:
-        typedef std::wstring string;
-        enum type { MESSAGE_Mail, MESSAGE_Windows, MESSAGE_Quit };
-        
-        struct message {
-            type type;
-            string mail;
-            MSG windows;
-            DWORD status;
-        };
+// Windows
+#include <Windows.h>
 
-        mail(int mailboxes); virtual ~mail();
-        bool send(const string& mail, unsigned long timeout);
-        bool recv(string& buffer, unsigned long timeout);
-        bool recv(message& message, unsigned long timeout);
+#ifdef CONSOLE_DYNAMIC
+#ifdef CONSOLE_EXPORTS
+#define CONSOLE_API __declspec(dllexport)
+#else
+#define CONSOLE_API __declspec(dllimport)
+#endif
+#else
+#define CONSOLE_API
+#endif
 
-    private:
-        std::vector<string> _boxes;
-        int _next_filled;
-        int _next_empty;
-        HANDLE _sem_empty;
-        HANDLE _sem_filled;
-        lock _lock;
-    };
-}
+// Opaque console type
+typedef struct CONSOLE CONSOLE;
+
+CONSOLE_API int  console_create(CONSOLE** console);
+CONSOLE_API void console_show(CONSOLE* console, int visible);
+CONSOLE_API int  console_visible(CONSOLE* console);
+CONSOLE_API void console_toggle(CONSOLE* console);
+CONSOLE_API int  console_write(CONSOLE* console, const wchar_t* text);
+CONSOLE_API int  console_write_utf8(CONSOLE* console, const char* text);
+CONSOLE_API int  console_read(CONSOLE* console, const wchar_t* buffer, size_t length);
+CONSOLE_API int  console_destroy(CONSOLE* console);

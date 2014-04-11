@@ -68,8 +68,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="contrib\RichEditThemed.h" />
+    <ClInclude Include="include\console.h" />
     <ClInclude Include="include\console.hpp" />
     <ClInclude Include="include\exceptions.hpp" />
+    <ClInclude Include="include\lock.hpp" />
     <ClInclude Include="include\mail.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

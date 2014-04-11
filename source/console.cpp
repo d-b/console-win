@@ -32,15 +32,20 @@ namespace db
 {
     // Constants
     enum {CONSOLE_IDC_OUTPUT = 101, 
-          CONSOLE_IDC_INPUT  = 102,
-          CONSOLE_MSG_QUIT   = WM_USER};
+          CONSOLE_IDC_INPUT = 102,
+          CONSOLE_MSG_QUIT = WM_USER};
 
     // Name for console window class
     static const wchar_t* CONSOLE_WINDOW_CLASS = L"db::console";
 
+    // Globals
+    lock console::_ref_lock;
+    int console::_ref_count = 0;
+
     console::console(std::wstring title, HICON icon, rgb background, int buffers)
         : _title(title),
           _icon(icon),
+          _background(background),
           _event_initialized(NULL),
           _thread_console(NULL),
           _hwnd_console(NULL),
@@ -49,6 +54,9 @@ namespace db
           _mail_input(buffers),
           _mail_output(buffers)
     {
+        // Acquire a reference
+        _ref_acquire();
+
         // Load the required libraries
         LoadLibrary(_T("msftedit.dll"));
 
@@ -76,6 +84,9 @@ namespace db
 
         // Cleanup remaining resources
         CloseHandle(_event_initialized);
+
+        // Release the reference
+        _ref_release();
     }
 
     void console::show(bool visible) {
@@ -106,19 +117,6 @@ namespace db
         // Fetch the current instance
         HINSTANCE hinstance = _get_instance();
 
-        // Setup the window class and register it
-        WNDCLASSEX cls = { 0 };
-        cls.cbSize = sizeof(cls);
-        cls.style = CS_HREDRAW | CS_VREDRAW;
-        cls.lpfnWndProc = _callback_winproc;
-        cls.hIcon = _icon;
-        cls.hIconSm = _icon;
-        cls.hCursor = LoadCursor(NULL, IDC_ARROW);
-        cls.hbrBackground = static_cast<HBRUSH>(GetSysColorBrush(COLOR_3DFACE));
-        cls.lpszClassName = CONSOLE_WINDOW_CLASS;
-        cls.hInstance = hinstance;
-        RegisterClassEx(&cls);
-
         // Create the window for the terminal
         _hwnd_console = CreateWindowEx(
             0,
@@ -137,6 +135,10 @@ namespace db
 
         // Add this instance to the window
         SetWindowLongPtr(_hwnd_console, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+
+        // Configure the window
+        SendMessage(_hwnd_console, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(_icon));
+        SendMessage(_hwnd_console, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(_icon));
 
         //
         // Create the edit boxes
@@ -176,8 +178,8 @@ namespace db
         SendMessage(_hwnd_console_input, EM_SETTEXTMODE, TM_PLAINTEXT, 0);
 
         // Set color scheme
-        SendMessage(_hwnd_console_output, EM_SETBKGNDCOLOR, 0, RGB(230, 230, 230));
-        SendMessage(_hwnd_console_input, EM_SETBKGNDCOLOR, 0, RGB(230, 230, 230));
+        SendMessage(_hwnd_console_output, EM_SETBKGNDCOLOR, 0, RGB(_background.red, _background.green, _background.blue));
+        SendMessage(_hwnd_console_input, EM_SETBKGNDCOLOR, 0, RGB(_background.red, _background.green, _background.blue));
 
         // Apply theme to edit controls
         CRichEditThemed::Attach(_hwnd_console_output);
@@ -339,5 +341,35 @@ namespace db
             reinterpret_cast<LPCWSTR>(&_get_instance),
             &instance);
         return instance;
+    }
+
+    void console::_wndclass_register() {
+        WNDCLASSEX cls = { 0 };
+        cls.cbSize = sizeof(cls);
+        cls.style = CS_HREDRAW | CS_VREDRAW;
+        cls.lpfnWndProc = _callback_winproc;
+        cls.hIcon = NULL;
+        cls.hIconSm = NULL;
+        cls.hCursor = LoadCursor(NULL, IDC_ARROW);
+        cls.hbrBackground = static_cast<HBRUSH>(GetSysColorBrush(COLOR_3DFACE));
+        cls.lpszClassName = CONSOLE_WINDOW_CLASS;
+        cls.hInstance = _get_instance();
+        RegisterClassEx(&cls);
+    }
+    
+    void console::_wndclass_unregister() {
+        UnregisterClass(CONSOLE_WINDOW_CLASS, _get_instance());
+    }
+
+    void console::_ref_acquire() {
+        _ref_lock.acquire();
+        if (_ref_count++ == 0) _wndclass_register();
+        _ref_lock.release();
+    }
+    
+    void console::_ref_release() {
+        _ref_lock.acquire();
+        if (--_ref_count == 0) _wndclass_unregister();
+        _ref_lock.release();
     }
 }

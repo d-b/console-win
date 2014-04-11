@@ -41,6 +41,7 @@
 #endif
 
 // Project
+#include "lock.hpp"
 #include "exceptions.hpp"
 #include "mail.hpp"
 
@@ -123,12 +124,15 @@ namespace db
         // Helpers
         //
         static HINSTANCE _get_instance();
+        static void _wndclass_register();
+        static void _wndclass_unregister();
 
         //
         // Stored settings
         //
         std::wstring _title;
         HICON _icon;
+        rgb _background;
 
         //
         // Handles
@@ -145,5 +149,13 @@ namespace db
         //
         mail _mail_input;
         mail _mail_output;
+
+        //
+        // Reference counting
+        //
+        static void _ref_acquire();
+        static void _ref_release();
+        static lock _ref_lock;
+        static int _ref_count;
     };
 }

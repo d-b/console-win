@@ -25,7 +25,6 @@
 namespace db
 {
     mail::mail(int mailboxes) {
-        InitializeCriticalSection(&_lock);
         _sem_filled = CreateSemaphore(NULL, 0, mailboxes, NULL);
         _sem_empty = CreateSemaphore(NULL, mailboxes, mailboxes, NULL);
         _next_empty = _next_filled = 0;
@@ -37,10 +36,10 @@ namespace db
         if (WaitForSingleObject(_sem_empty, timeout) != WAIT_OBJECT_0) return false;
 
         // Fill mailbox with message
-        EnterCriticalSection(&_lock);
+        _lock.acquire();
         _boxes[_next_empty].assign(mail);
         _next_empty = (_next_empty + 1) % _boxes.size();
-        LeaveCriticalSection(&_lock);
+        _lock.release();
 
         // Flag reader
         ReleaseSemaphore(_sem_filled, 1, NULL);
@@ -52,10 +51,10 @@ namespace db
         if (WaitForSingleObject(_sem_filled, timeout) != WAIT_OBJECT_0) return false;
         
         // Read mail in mailbox
-        EnterCriticalSection(&_lock);
+        _lock.acquire();
         buffer = _boxes[_next_filled];
         _next_filled = (_next_filled + 1) % _boxes.size();
-        LeaveCriticalSection(&_lock);
+        _lock.release();
 
         // Flag writer
         ReleaseSemaphore(_sem_empty, 1, NULL);
@@ -74,10 +73,10 @@ namespace db
             if (result == WAIT_OBJECT_0) {
                 // Read mail in mailbox
                 message.type = MESSAGE_Mail;
-                EnterCriticalSection(&_lock);
+                _lock.acquire();
                 message.mail = _boxes[_next_filled];
                 _next_filled = (_next_filled + 1) % _boxes.size();
-                LeaveCriticalSection(&_lock);
+                _lock.release();
 
                 // Flag writer
                 ReleaseSemaphore(_sem_empty, 1, NULL);
