@@ -30,10 +30,12 @@
 
 namespace db
 {
-    //
-    // Static configuration
-    //
-    enum {CONSOLE_IDC_OUTPUT = 101, CONSOLE_IDC_INPUT  = 102};
+    // Constants
+    enum {CONSOLE_IDC_OUTPUT = 101, 
+          CONSOLE_IDC_INPUT  = 102,
+          CONSOLE_MSG_QUIT   = WM_USER};
+
+    // Name for console window class
     static const wchar_t* CONSOLE_WINDOW_CLASS = L"db::console";
 
     console::console(std::wstring title, HICON icon, rgb background, int buffers)
@@ -55,7 +57,7 @@ namespace db
         win_exception::check(_event_initialized);
 
         // Start the main thread
-        _thread_console = CreateThread(NULL, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(_calback_threadproc), this, 0, NULL);
+        _thread_console = CreateThread(NULL, 0, _calback_threadproc, this, 0, NULL);
         win_exception::check(_thread_console);
 
         // Wait for initialization to complete
@@ -64,7 +66,7 @@ namespace db
 
     console::~console() {
         // First destroy the console window
-        if (_hwnd_console) DestroyWindow(_hwnd_console);
+        if (_hwnd_console) SendMessage(_hwnd_console, CONSOLE_MSG_QUIT, 0, 0);
 
         // Wait for the thread to complete if it exists
         if (_thread_console) {
@@ -74,6 +76,18 @@ namespace db
 
         // Cleanup remaining resources
         CloseHandle(_event_initialized);
+    }
+
+    void console::show(bool visible) {
+        ShowWindow(_hwnd_console, visible ? SW_SHOW : SW_HIDE);
+    }
+
+    bool console::visible() {
+        return IsWindowVisible(_hwnd_console);
+    }
+
+    void console::toggle() {
+        show(!visible());
     }
 
     bool console::write(const std::wstring& richtext, unsigned long timeout) {
@@ -232,6 +246,13 @@ namespace db
             }
             break;
         case WM_CLOSE:
+            ShowWindow(_hwnd_console, SW_HIDE);
+            break;
+        case CONSOLE_MSG_QUIT:
+            DestroyWindow(_hwnd_console);
+            break;
+        case WM_DESTROY:
+            PostQuitMessage(0);
             break;
 
         default:

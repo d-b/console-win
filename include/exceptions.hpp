@@ -54,7 +54,7 @@ namespace db
         static void check_last_error() {
             DWORD last_error = GetLastError();
             if (last_error != ERROR_SUCCESS)
-                throw new win_exception(last_error);
+                throw win_exception(last_error);
         }
 
         static void check(HANDLE handle) {

@@ -66,10 +66,28 @@ namespace db
         virtual ~console();
 
        /**
+        * Show or hide the console
+        *
+        * @param visible whether or not the console should be visible
+        */
+        void show(bool visible = true);
+
+       /**
+        * Returns the whether or not the console is visible
+        */
+        bool visible();
+
+       /**
+        * Toggles the visibility of console
+        */
+        void toggle();
+
+       /**
         * Write rich text to the console
         *
         * @param richtext the rich text to write to the console
         * @param timeout how long to wait, in milliseconds, for a successful write
+        * @return whether or not the write succeeded
         */
         bool write(const std::wstring& richtext, unsigned long timeout);
 
@@ -78,6 +96,7 @@ namespace db
         *
         * @param buffer a buffer to hold the text
         * @param timeout how long to wait, in milliseconds, for a successful read
+        * @return whether or not the read succeeded
         */
         bool read(std::wstring& buffer, unsigned long timeout);
 

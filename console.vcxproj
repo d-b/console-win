@@ -45,17 +45,22 @@
       <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)contrib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>OldStyle</DebugInformationFormat>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <StructMemberAlignment>4Bytes</StructMemberAlignment>
       <MinimalRebuild>false</MinimalRebuild>
     </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)contrib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>OldStyle</DebugInformationFormat>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <StructMemberAlignment>4Bytes</StructMemberAlignment>
     </ClCompile>
+    <Link />
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="contrib\RichEditThemed.cpp" />
