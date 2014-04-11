@@ -35,18 +35,16 @@ namespace db
           CONSOLE_IDC_INPUT = 102,
           CONSOLE_MSG_QUIT = WM_USER};
 
-    // Name for console window class
+    // Defaults for the console
     static const wchar_t* CONSOLE_WINDOW_CLASS = L"db::console";
+    static const wchar_t* CONSOLE_WINDOW_TITLE = L"Console";
 
     // Globals
     lock console::_ref_lock;
     int console::_ref_count = 0;
 
-    console::console(std::wstring title, HICON icon, rgb background, int buffers)
-        : _title(title),
-          _icon(icon),
-          _background(background),
-          _event_initialized(NULL),
+    console::console(int buffers)
+        : _event_initialized(NULL),
           _thread_console(NULL),
           _hwnd_console(NULL),
           _hwnd_console_input(NULL),
@@ -89,16 +87,40 @@ namespace db
         _ref_release();
     }
 
-    void console::show(bool visible) {
+    console& console::show(bool visible) {
         ShowWindow(_hwnd_console, visible ? SW_SHOW : SW_HIDE);
+        return *this;
+    }
+
+    console& console::toggle() {
+        show(!visible());
+        return *this;
+    }
+
+    console& console::title(const wchar_t* text) {
+        SendMessage(_hwnd_console, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(text));
+        return *this;
+    }
+
+    console& console::icon(HICON handle) {
+        SendMessage(_hwnd_console, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(handle));
+        SendMessage(_hwnd_console, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(handle));
+        return *this;
+    }
+
+    console& console::background(rgb colour) {
+        SendMessage(_hwnd_console_output, EM_SETBKGNDCOLOR, 0, RGB(colour.red, colour.green, colour.blue));
+        SendMessage(_hwnd_console_input, EM_SETBKGNDCOLOR, 0, RGB(colour.red, colour.green, colour.blue));
+        return *this;
+    }
+
+    console& console::resize(int width, int height) {
+        SetWindowPos(_hwnd_console, NULL, 0, 0, width, height, SWP_NOMOVE | SWP_NOACTIVATE);
+        return *this;
     }
 
     bool console::visible() {
         return IsWindowVisible(_hwnd_console);
-    }
-
-    void console::toggle() {
-        show(!visible());
     }
 
     bool console::write(const std::wstring& richtext, unsigned long timeout) {
@@ -121,7 +143,7 @@ namespace db
         _hwnd_console = CreateWindowEx(
             0,
             CONSOLE_WINDOW_CLASS,
-            _title.c_str(),
+            CONSOLE_WINDOW_TITLE,
             WS_OVERLAPPEDWINDOW,
 
             // Size and position
@@ -135,10 +157,6 @@ namespace db
 
         // Add this instance to the window
         SetWindowLongPtr(_hwnd_console, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
-
-        // Configure the window
-        SendMessage(_hwnd_console, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(_icon));
-        SendMessage(_hwnd_console, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(_icon));
 
         //
         // Create the edit boxes
@@ -177,16 +195,9 @@ namespace db
         SendMessage(_hwnd_console_input, EM_SETEVENTMASK, 0, ENM_KEYEVENTS | ENM_MOUSEEVENTS);
         SendMessage(_hwnd_console_input, EM_SETTEXTMODE, TM_PLAINTEXT, 0);
 
-        // Set color scheme
-        SendMessage(_hwnd_console_output, EM_SETBKGNDCOLOR, 0, RGB(_background.red, _background.green, _background.blue));
-        SendMessage(_hwnd_console_input, EM_SETBKGNDCOLOR, 0, RGB(_background.red, _background.green, _background.blue));
-
         // Apply theme to edit controls
         CRichEditThemed::Attach(_hwnd_console_output);
         CRichEditThemed::Attach(_hwnd_console_input);
-        
-        // Show the window
-        ShowWindow(_hwnd_console, SW_SHOW);
 
         // Set initialization event
         SetEvent(_event_initialized);

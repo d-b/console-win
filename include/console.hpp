@@ -50,7 +50,11 @@ namespace db
     class CONSOLE_API console {
     public:
 
-        struct rgb { unsigned char red, green, blue; };
+        struct rgb {
+            rgb(unsigned char red, unsigned char green, unsigned char blue)
+                : red(red), green(green), blue(blue) {};
+            unsigned char red, green, blue;
+        };
 
        /**
         * Construct a new console
@@ -59,7 +63,7 @@ namespace db
         * @param background the rgb colour to use for the background
         * @param buffers the number of buffers to reserve for storing i/o
         */
-        console(std::wstring title, HICON icon, rgb background, int buffers);
+        console(int buffers);
         
        /**
         * Destroys internal resources used by the console
@@ -71,17 +75,46 @@ namespace db
         *
         * @param visible whether or not the console should be visible
         */
-        void show(bool visible = true);
+        console& show(bool visible = true);
+
+       /**
+        * Toggles the visibility of console
+        */
+        console& toggle();
+
+       /**
+        * Sets a new title for the console
+        *
+        * @param text the new title to set
+        */
+        console& title(const wchar_t* text);
+
+       /**
+        * Sets a new icon for the console
+        *
+        * @param icon the new icon to set
+        */
+        console& icon(HICON handle);
+
+       /**
+        * Sets a new background colour
+        *
+        * @param colour the new background colour
+        */
+        console& background(rgb colour);
+
+        /**
+        * Resizes the console
+        *
+        * @param width the new width of the console
+        * @param height the new height of the console
+        */
+        console& resize(int width, int height);
 
        /**
         * Returns the whether or not the console is visible
         */
         bool visible();
-
-       /**
-        * Toggles the visibility of console
-        */
-        void toggle();
 
        /**
         * Write rich text to the console
@@ -126,13 +159,6 @@ namespace db
         static HINSTANCE _get_instance();
         static void _wndclass_register();
         static void _wndclass_unregister();
-
-        //
-        // Stored settings
-        //
-        std::wstring _title;
-        HICON _icon;
-        rgb _background;
 
         //
         // Handles
